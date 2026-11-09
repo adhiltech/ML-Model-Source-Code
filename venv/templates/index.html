@@ -1,0 +1,456 @@
+cat > templates/index.html <<'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iris Flower Predictor</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+    background:#F9F7F2;
+    color:#211F1C;
+    font-family:'DM Sans',sans-serif;
+    min-height:100vh;
+    padding:55px 18px;
+}
+
+.container{max-width:460px;margin:auto}
+
+header{text-align:center}
+
+.badge{
+    display:inline-block;
+    border:1px solid #E8E2D9;
+    border-radius:30px;
+    padding:6px 14px;
+    color:#817A72;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:1px;
+}
+
+h1{
+    font-family:'DM Serif Display',serif;
+    font-size:38px;
+    line-height:1.15;
+    margin:17px 0 10px;
+}
+
+.subtitle{
+    font-size:13px;
+    line-height:1.7;
+    color:#77716A;
+}
+
+.section-label{
+    font-size:10px;
+    font-weight:700;
+    color:#817A72;
+    letter-spacing:1px;
+    margin-bottom:11px;
+}
+
+.samples{margin-top:38px}
+
+.sample-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+}
+
+.sample-card{
+    background:white;
+    border:1px solid #EAE5DC;
+    border-radius:13px;
+    padding:12px 4px;
+    text-align:center;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.sample-card:hover{transform:translateY(-3px)}
+
+.sample-card.active{
+    border:1.5px solid #29251F;
+    background:#F4F0E9;
+}
+
+.sample-icon{font-size:20px;margin-bottom:5px}
+.sample-name{font-size:11px;font-weight:700}
+.sample-values{font-size:9px;color:#817A72;margin-top:3px}
+
+.panel{
+    margin-top:26px;
+    background:white;
+    border:1px solid #EAE5DC;
+    border-radius:20px;
+    padding:27px;
+}
+
+.measurement-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:25px 22px;
+}
+
+.measurement-title{
+    display:block;
+    color:#77716A;
+    font-size:11px;
+    margin-bottom:9px;
+}
+
+.slider-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+input[type=range]{
+    width:100%;
+    min-width:0;
+    accent-color:#211F1C;
+    cursor:pointer;
+}
+
+.value{
+    width:29px;
+    flex-shrink:0;
+    text-align:right;
+    font-size:12px;
+    font-weight:700;
+}
+
+.actions{
+    display:flex;
+    gap:9px;
+    margin-top:27px;
+}
+
+.predict-button{
+    flex:1;
+    height:46px;
+    border:0;
+    border-radius:12px;
+    background:#211F1C;
+    color:white;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.predict-button:hover{background:#484239}
+.predict-button:disabled{opacity:.6;cursor:wait}
+
+.reset-button{
+    padding:0 15px;
+    border:1px solid #EAE5DC;
+    border-radius:12px;
+    background:#F9F7F2;
+    color:#514B43;
+    font-weight:600;
+    cursor:pointer;
+}
+
+.result{
+    display:none;
+    margin-top:20px;
+    background:white;
+    border:1px solid #EAE5DC;
+    border-radius:18px;
+    padding:25px;
+    text-align:center;
+    animation:show .4s ease;
+}
+
+.result-icon{font-size:43px;margin-bottom:9px}
+
+.result-label{
+    font-size:10px;
+    font-weight:700;
+    color:#817A72;
+    letter-spacing:1px;
+}
+
+.result-name{
+    font-family:'DM Serif Display',serif;
+    font-size:29px;
+    margin:7px 0;
+}
+
+.result-description{
+    color:#77716A;
+    font-size:12px;
+    line-height:1.7;
+}
+
+.result-status{
+    display:inline-block;
+    background:#F0F5EC;
+    color:#55734A;
+    border-radius:20px;
+    padding:6px 12px;
+    font-size:10px;
+    font-weight:700;
+    margin-top:13px;
+}
+
+.error{
+    color:#C0392B;
+    font-size:12px;
+    text-align:center;
+    margin-top:12px;
+}
+
+footer{
+    text-align:center;
+    color:#817A72;
+    font-size:10px;
+    margin-top:28px;
+}
+
+@keyframes show{
+    from{opacity:0;transform:translateY(12px)}
+    to{opacity:1;transform:translateY(0)}
+}
+
+@media(max-width:400px){
+    .panel{padding:22px 16px}
+    .measurement-grid{gap:22px 13px}
+    h1{font-size:34px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <span class="badge">ML MODEL — AWS EC2</span>
+    <h1>Iris Flower<br>Predictor</h1>
+    <p class="subtitle">
+        Adjust the measurements and predict<br>
+        which iris species it belongs to
+    </p>
+</header>
+
+<section class="samples">
+    <div class="section-label">TRY A SAMPLE</div>
+
+    <div class="sample-grid">
+
+        <button class="sample-card" type="button"
+        data-sample="Setosa" onclick="setSample(this,5.1,3.5,1.4,0.2)">
+            <div class="sample-icon">🌸</div>
+            <div class="sample-name">Setosa</div>
+            <div class="sample-values">5.1, 3.5, 1.4, 0.2</div>
+        </button>
+
+        <button class="sample-card" type="button"
+        data-sample="Versicolor" onclick="setSample(this,6.3,3.3,4.7,1.6)">
+            <div class="sample-icon">🌺</div>
+            <div class="sample-name">Versicolor</div>
+            <div class="sample-values">6.3, 3.3, 4.7, 1.6</div>
+        </button>
+
+        <button class="sample-card" type="button"
+        data-sample="Virginica" onclick="setSample(this,6.7,3.0,5.2,2.3)">
+            <div class="sample-icon">🌷</div>
+            <div class="sample-name">Virginica</div>
+            <div class="sample-values">6.7, 3.0, 5.2, 2.3</div>
+        </button>
+
+    </div>
+</section>
+
+<section class="panel">
+
+    <div class="section-label">MEASUREMENTS (CM)</div>
+
+    <div class="measurement-grid">
+
+        <div>
+            <label class="measurement-title" for="sl">Sepal Length</label>
+            <div class="slider-row">
+                <input type="range" id="sl" min="4" max="8" step="0.1" value="5.1">
+                <span class="value" id="sl-value">5.1</span>
+            </div>
+        </div>
+
+        <div>
+            <label class="measurement-title" for="sw">Sepal Width</label>
+            <div class="slider-row">
+                <input type="range" id="sw" min="2" max="5" step="0.1" value="3.5">
+                <span class="value" id="sw-value">3.5</span>
+            </div>
+        </div>
+
+        <div>
+            <label class="measurement-title" for="pl">Petal Length</label>
+            <div class="slider-row">
+                <input type="range" id="pl" min="1" max="7" step="0.1" value="1.4">
+                <span class="value" id="pl-value">1.4</span>
+            </div>
+        </div>
+
+        <div>
+            <label class="measurement-title" for="pw">Petal Width</label>
+            <div class="slider-row">
+                <input type="range" id="pw" min="0.1" max="2.5" step="0.1" value="0.2">
+                <span class="value" id="pw-value">0.2</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="actions">
+        <button class="predict-button" id="predictButton"
+        type="button" onclick="predictFlower()">
+            Predict Species →
+        </button>
+
+        <button class="reset-button" type="button" onclick="resetForm()">
+            Reset
+        </button>
+    </div>
+
+    <div class="error" id="error" role="alert"></div>
+
+</section>
+
+<section class="result" id="result" aria-live="polite">
+    <div class="result-icon" id="resultIcon"></div>
+    <div class="result-label">YOUR FLOWER IS</div>
+    <div class="result-name" id="resultName"></div>
+    <p class="result-description" id="resultDescription"></p>
+    <span class="result-status">✓ Prediction completed</span>
+</section>
+
+<footer>
+    Built with Flask · scikit-learn · AWS EC2
+</footer>
+
+</div>
+
+<script>
+const fields = ["sl","sw","pl","pw"];
+
+const speciesDetails = {
+    "Setosa":{
+        icon:"🌸",
+        description:"Small delicate flower with short petals. Native to Arctic regions."
+    },
+    "Versicolor":{
+        icon:"🌺",
+        description:"Medium sized flower. The most widespread iris species."
+    },
+    "Virginica":{
+        icon:"🌷",
+        description:"Large flower with long broad petals. Found in Eastern USA."
+    }
+};
+
+// LIVE SLIDER VALUES
+fields.forEach(id=>{
+    document.getElementById(id).addEventListener("input",function(){
+        document.getElementById(id+"-value").textContent =
+            Number(this.value).toFixed(1);
+
+        clearSelection();
+        hideResult();
+    });
+});
+
+function clearSelection(){
+    document.querySelectorAll(".sample-card").forEach(card=>{
+        card.classList.remove("active");
+    });
+}
+
+function hideResult(){
+    document.getElementById("result").style.display="none";
+    document.getElementById("error").textContent="";
+}
+
+// SAMPLE SELECTION
+function setSample(card,sl,sw,pl,pw){
+    const values=[sl,sw,pl,pw];
+
+    fields.forEach((id,index)=>{
+        document.getElementById(id).value=values[index];
+        document.getElementById(id+"-value").textContent=
+            Number(values[index]).toFixed(1);
+    });
+
+    clearSelection();
+    card.classList.add("active");
+    hideResult();
+}
+
+// RESET
+function resetForm(){
+    setSample(null,5.1,3.5,1.4,0.2);
+    hideResult();
+}
+
+// PREDICTION
+async function predictFlower(){
+
+    const button=document.getElementById("predictButton");
+    const error=document.getElementById("error");
+
+    error.textContent="";
+    hideResult();
+
+    const features=fields.map(id=>
+        Number(document.getElementById(id).value)
+    );
+
+    button.disabled=true;
+    button.textContent="⏳ Predicting...";
+
+    try{
+        const response=await fetch("/predict",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({features:features})
+        });
+
+        const data=await response.json();
+
+        if(!response.ok){
+            throw new Error(data.error || "Prediction failed");
+        }
+
+        const details=speciesDetails[data.prediction];
+
+        if(!details){
+            throw new Error("Unexpected prediction from model");
+        }
+
+        document.getElementById("resultIcon").textContent=details.icon;
+        document.getElementById("resultName").textContent=data.prediction;
+        document.getElementById("resultDescription").textContent=details.description;
+
+        document.getElementById("result").style.display="block";
+
+    }catch(err){
+        error.textContent=err.message;
+    }finally{
+        button.disabled=false;
+        button.textContent="Predict Species →";
+    }
+}
+</script>
+
+</body>
+</html>
+EOF
